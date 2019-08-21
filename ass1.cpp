@@ -12,7 +12,12 @@ void int main(){
 	string str;
 	vector<string> strlist;
 
-	int time
+	int time;
+	int m;
+	int k;
+	vector<string> genes;
+	int[][] costmap;
+
 	while(getline(infile,str)){
 
 	}
