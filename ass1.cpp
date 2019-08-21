@@ -4,7 +4,29 @@
 
 using namespace std;
 
-void int main(){
+class state{
+public:
+	int f;
+	int g;
+	vector<int> indices ;
+
+	state(){
+		f = 0 ;
+		g = 0 ;
+	}
+	state(int x,int y,vector<int> v){
+		f = x ;
+		g = y ;
+		indices = v ;
+	}
+	// vector<vector<int>>	expand(){
+	// 	vector<vector<int>>
+	// }
+
+
+}
+
+int main(){
 	ifstream infile; 
 	infile.open("input.txt"); 
 
@@ -13,35 +35,61 @@ void int main(){
 	float time;
 	int m;
 	int k;
-	string s[k] ;
-	char units[m] ;
-	char temp ;
-	int costmap[m+1][m+1];
 	int cc ;
 	infile >> time ;
 	infile >> m ;
-	for(int i = 0 ; i < m ; i++){
-	    infile >> units[i] ;
-	    infile >> temp ;
+
+
+	char units[m] ;
+	int costmap[m+1][m+1];
+	char temp;
+
+	getline(infile,str);
+	getline(infile,str);
+
+	//Reading units
+	int count = 0;
+	for(int i = 0 ; i < str.length() ; i++){
+		if(str.at(i) == ' ' || str.at(i) == ','){
+			continue ;
+		}
+	    units[count] = str.at(i);
+	    count++;
 	}
-	infile >> k ;
+
+	infile >> k;
+	string s[k] ;
     for(int i = 0 ; i < k ; i++){
-        infile >>  s[i] ;
+    	infile >> s[i];
     }
     infile >> cc ;
-	for(int i = 0 ; i < = m ; i++){
+	for(int i = 0 ; i <= m ; i++){
 	    for(int j = 0 ; j <= m ; j++){
 	        infile >> costmap[i][j] ;
 	    }
 	}
-    infile >> temp ;
-	cout << temp ;
-	cout << "Received Costs" << endl ;
-    for(int i = 0 ; i < = m ; i++){
-        for(int j = 0 ; j <= m ; j++){
-            cout << costmap[i][j] << " " ;
-        }
-        cout << endl ;
-    }
+
+	// cout << time << endl;
+	// cout << m << endl;
+	// cout << k << endl;
+	// for (int i = 0; i < m; i++){
+	// 	cout << units[i] << " ";
+	// }
+	// cout << endl;
+	// for(int i = 0 ; i < k ; i++){
+ 	//    cout << s[i] << endl ;
+ 	// }
+
+
+ //    infile >> temp ;
+	// cout << temp << endl;
+	// // cout << "Received Costs" << endl ;
+ //    for(int i = 0 ; i <= m ; i++){
+ //        for(int j = 0 ; j <= m ; j++){
+ //            cout << costmap[i][j] << " " ;
+ //        }
+ //        cout << endl ;
+ //    }
+	infile.close();
 	return 0;
 }
