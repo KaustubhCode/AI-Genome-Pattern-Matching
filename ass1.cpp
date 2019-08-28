@@ -1,9 +1,11 @@
 #include <fstream>
 #include <iostream>
+#include <stdlib.h>
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include <ctime>
+#include <limits>
 
 using namespace std;
 
@@ -72,6 +74,48 @@ class state{
 		}
 };
 
+string swap_char(string str, int i, int j){
+		str.erase(str.begin()+i);
+		str.insert(j,"_");
+		return str;
+}
+
+
+//Neighbours of '_' are all elements
+state greedy_choose_whole(state current, int ind){
+	string str = current.all_seq.at(ind);
+	int min_score = current.score;
+	state best_state = current;
+	for (int i = 0; i < str.size(); i++){
+		if (str.at(i) == '_'){
+			for (int j = 0; j < i; j++){
+				string new_str = swap_char(str,i,j);
+				vector<string> new_seq = current.all_seq;
+				new_seq.at(ind) = new_str;
+				state new_state(current.n, new_seq);
+				if (new_state.score < min_score){
+					best_state = new_state;
+					min_score = new_state.score;
+				}
+			}
+
+			for (int j = i+1; j < str.size()-1; j++){
+				string new_str = swap_char(str,i,j);
+				vector<string> new_seq = current.all_seq;
+				new_seq.at(ind) = new_str;
+				state new_state(current.n, new_seq);
+				if (new_state.score < min_score){
+					best_state = new_state;
+					min_score = new_state.score;
+				}
+			}
+		}
+	}
+	return best_state;
+}
+
+
+//Neighbours of '_' are the elements beside it
 state greedy_choose(state current, int ind){
 	string str = current.all_seq.at(ind);
 	int min_score = current.score;
@@ -105,26 +149,74 @@ state greedy_choose(state current, int ind){
 	return best_state;
 }
 
-state greedy_local_search(state current){
-	//Find next best state
-	int count = 0;
-	while (true){
-		// cout << "Working:" << count << endl;
-		state next = greedy_choose(current,count);
-		next.print_state();
-
-		if (next.score > current.score){
-			return current;
+state create_random_state(string s[], int maxlen){
+	state first(maxlen);
+	for (int i = 0; i < k; i++){
+		while (s[i].size() < maxlen){
+			int rand_int = (rand() % (s[i].size()+1));
+			if (rand_int ==  s[i].size()){
+				s[i].append("_");	
+			}
+			else{
+				s[i].insert(rand_int,"_");
+			}
 		}
-		else{
-			current = next;
-		}
-		count = (count+1)%k;
+		first.add(s[i]);
 	}
+	first.compute_cost();
+	return first;
+}
+
+state greedy_local_search(string s[], int maxlen){
+	state current = create_random_state(s,maxlen+1);
+	int min_score = current.score;
+	state min_state = current;
+	// int i = 0;
+
+	// while (i < 100){
+	for (int i=maxlen; i <= maxlen*k; i++){
+		state current = create_random_state(s,i);
+		cout << "Initial state:" << endl;
+		current.print_state();
+		cout << "--------------------" << endl;
+
+		//Find next best state
+		int count = 0;
+		int tabu_count = 0;
+		while (true){
+			// cout << "Working:" << count << endl;
+			state next = greedy_choose_whole(current,count);
+			next.print_state();
+
+			if (next.score < min_score){
+				min_score = next.score;
+				min_state = next;
+			}
+
+			if (next.score > current.score){
+				break;
+			}
+			else if (next.score == current.score){
+				tabu_count++;
+				if (tabu_count == 20){
+					break;
+				}
+			}
+			else{
+				tabu_count = 0;
+				current = next;
+			}
+			count = (count+1)%k;
+		}
+		// i++;
+	}
+	printf("Min score is: %d\n", min_score);
+	min_state.print_state();
+	return min_state;
 }
 
 int main(){
-
+	srand(time(NULL));
 	start_time = time(NULL);
 
 	ifstream infile; 
@@ -170,24 +262,16 @@ int main(){
 	    globalcosts.push_back(temp);
 	}
 
-	maxlen += 1;
+	// first.compute_cost();
+	// first.print_state();
 
-	state first(maxlen);
-
-	for (int i = 0; i < k; i++){
-		while (s[i].size() < maxlen){
-			s[i] = s[i].append("_");
-		}
-		first.add(s[i]);
-	}
-	first.compute_cost();
-	first.print_state();
-
+	greedy_local_search(s,maxlen);
+	
 	// string test = s[0];
 	// cout << "String initially:" << test << endl;
 	// swap(test[2],test[3]);
 	// cout << "String finally:" << test << endl;
-	greedy_local_search(first);
+	
 	// printf("Program will run for %f seconds\n",total_time*60);
 	// while (true){
 		// cout << "Time passed is: " << (time(NULL) - start_time) << endl;
