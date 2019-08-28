@@ -44,7 +44,9 @@ class state{
 		}
 
 		void add(state prev){
-			all_seq = prev.all_seq;
+			for (int i = 0; i < prev.all_seq.size();i++){
+				all_seq.push_back(prev.all_seq[i]);
+			}
 		}
 
 		void add_score(int new_score){
@@ -55,13 +57,16 @@ class state{
 			score = 0;
 			for (int i = 0; i < n; i++){
 				for (int j = 0; j < k; j++){
-					if (all_seq.at(j).at(i) == '_'){
+					if (all_seq[j].at(i) == '_'){
 						score += cc;
+						// cout << score << " ";
 					}
 					for (int p = j+1; p < k; p++){
-						score += globalcosts.at(umap[all_seq.at(j).at(i)]).at(umap[all_seq.at(p).at(i)]);
+						score += globalcosts[umap[all_seq[j].at(i)]][umap[all_seq[p].at(i)]];
+						// cout << score << " ";
 					}
 				}
+				// cout << endl;
 			}
 		}
 
@@ -149,19 +154,23 @@ state greedy_choose(state current, int ind){
 	return best_state;
 }
 
-state create_random_state(string s[], int maxlen){
-	state first(maxlen);
+state create_random_state(string s[], int length){
+	state first(length);
+	string new_s[k];
 	for (int i = 0; i < k; i++){
-		while (s[i].size() < maxlen){
-			int rand_int = (rand() % (s[i].size()+1));
-			if (rand_int ==  s[i].size()){
-				s[i].append("_");	
+		new_s[i] = s[i];
+	}
+	for (int i = 0; i < k; i++){
+		while (new_s[i].length() < length){
+			int rand_int = (rand() % (s[i].size()));
+			if (rand_int ==  s[i].size()-1){
+				new_s[i].append("_");	
 			}
 			else{
-				s[i].insert(rand_int,"_");
+				new_s[i].insert(rand_int,"_");
 			}
 		}
-		first.add(s[i]);
+		first.add(new_s[i]);
 	}
 	first.compute_cost();
 	return first;
@@ -171,11 +180,17 @@ state greedy_local_search(string s[], int maxlen){
 	state current = create_random_state(s,maxlen+1);
 	int min_score = current.score;
 	state min_state = current;
-	// int i = 0;
+	int i = maxlen;
 
-	// while (i < 100){
-	for (int i=maxlen; i <= maxlen*k; i++){
-		state current = create_random_state(s,i);
+
+	while (i <= maxlen*k){
+		if (time(NULL) - start_time + 5 >= total_time*60 ){
+			return min_state;
+		}
+		if ((i-maxlen)*k*cc >= min_score){
+			i = maxlen;
+		}
+		current = create_random_state(s,i);
 		cout << "Initial state:" << endl;
 		current.print_state();
 		cout << "--------------------" << endl;
@@ -189,6 +204,7 @@ state greedy_local_search(string s[], int maxlen){
 			next.print_state();
 
 			if (next.score < min_score){
+				next.print_state();
 				min_score = next.score;
 				min_state = next;
 			}
@@ -198,7 +214,7 @@ state greedy_local_search(string s[], int maxlen){
 			}
 			else if (next.score == current.score){
 				tabu_count++;
-				if (tabu_count == 20){
+				if (tabu_count == 10){
 					break;
 				}
 			}
@@ -208,10 +224,9 @@ state greedy_local_search(string s[], int maxlen){
 			}
 			count = (count+1)%k;
 		}
-		// i++;
+		i++;
 	}
-	printf("Min score is: %d\n", min_score);
-	min_state.print_state();
+	cout << "Min score: " << min_score << endl;
 	return min_state;
 }
 
@@ -254,18 +269,41 @@ int main(){
 
     //Storing costs
     infile >> cc ;
-	for(int i = 0 ; i <= m ; i++){
+	for(int i = 0 ; i <= m; i++){
 		vector<int> temp(m+1,0);
 	    for(int j = 0 ; j <= m ; j++){
-	        infile >> temp.at(j);
+	        infile >> temp[j];
 	    }
 	    globalcosts.push_back(temp);
 	}
 
+	// cout << umap['A'] << " " << umap['C'] << " " << umap['T'] << " " << umap['G'] << " " << umap['_'] << " " <<endl;
+
+	// state test = create_random_state(s,maxlen+1);
+	// test = create_random_state(s,maxlen+1);
+	// test.print_state();
+	// test.print_state();
+	// string str = current.all_seq.at(1);
+	// swap(str[i-1],str[i]);
+	// vector<string> new_seq = current.all_seq;
+	// new_seq.at(ind) = str;
+	// state new_state(current.n, new_seq);
+
+	// for (int i = 0; i <= m; i++){
+	// 	for (int j = 0; j <= m; j++){
+	// 		cout << globalcosts[i][j] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
+
 	// first.compute_cost();
 	// first.print_state();
 
-	greedy_local_search(s,maxlen);
+	state min_state = greedy_local_search(s,maxlen);
+	cout << "Min state is below" << endl;
+	min_state.print_state();
+
+
 	
 	// string test = s[0];
 	// cout << "String initially:" << test << endl;
