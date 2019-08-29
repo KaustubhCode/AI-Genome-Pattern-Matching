@@ -143,7 +143,7 @@ state greedy_choose_whole(state current, int ind){
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = new_str;
 				state new_state = current.create_new(current.n, new_seq, i, j);
-				if (new_state.score < min_score){
+				if (new_state.score <= min_score){
 					best_state = new_state;
 					min_score = new_state.score;
 				}
@@ -154,7 +154,7 @@ state greedy_choose_whole(state current, int ind){
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = new_str;
 				state new_state = current.create_new(current.n, new_seq, i, j);
-				if (new_state.score < min_score){
+				if (new_state.score <= min_score){
 					best_state = new_state;
 					min_score = new_state.score;
 				}
@@ -223,14 +223,17 @@ state create_random_state(string s[], int length){
 
 state generateFromPrev(state prev, int length){
 	state first(length);
+
 	string new_s[k];
 	for (int i = 0; i < k; i++){
 		new_s[i] = prev.all_seq[i];
 	}
+	
 	for (int i = 0; i < k; i++){
+		int size = prev.all_seq[i].length() ;
 		while (new_s[i].length() < length){
-			int rand_int = (rand() % (s[i].size()));
-			if (rand_int ==  s[i].size()-1){
+			int rand_int = (rand() % size);
+			if (rand_int ==  size-1){
 				new_s[i].append("_");
 			}
 			else{
@@ -261,8 +264,9 @@ state greedy_local_search(string s[], int maxlen){
             current = create_random_state(s,i);
 		}
 		else{
-            current = generateFromPrev(current,i)
+            current = generateFromPrev(current,i) ;
 		}
+		// current = create_random_state(s,i);
 		cout << "Initial state:" << endl;
 		current.print_state();
 		cout << "--------------------" << endl;
@@ -299,6 +303,7 @@ state greedy_local_search(string s[], int maxlen){
 		i++;
 	}
 	cout << "Min score: " << min_score << endl;
+
 	return min_state;
 }
 
@@ -307,7 +312,8 @@ int main(){
 	start_time = time(NULL);
 
 	ifstream infile;
-	infile.open("input.txt");
+	infile.open("input2.txt");
+	// infile.open("example.txt");
 	cout << "Reading from the file" << endl;
 	infile >> total_time ;
 	infile >> m ;
