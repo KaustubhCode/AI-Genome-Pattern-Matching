@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <ctime>
 #include <limits>
 
@@ -36,7 +37,14 @@ class state{
 			n = length_strings;
 			all_seq = new_seq;
 			score = 0;
-			compute_cost();
+			// compute_cost();
+		}
+
+		state create_new(int length_strings, vector<string> new_seq, int p, int q){
+			state new_state(n, new_seq);
+			new_state.score = score - compute_cost_ind(p) - compute_cost_ind(q);
+			new_state.score = score + new_state.compute_cost_ind(p) + new_state.compute_cost_ind(q);
+			return new_state;
 		}
 
 		void add(string seq){
@@ -54,20 +62,57 @@ class state{
 		}
 
 		void compute_cost(){
+
 			score = 0;
 			for (int i = 0; i < n; i++){
-				for (int j = 0; j < k; j++){
-					if (all_seq[j].at(i) == '_'){
-						score += cc;
-						// cout << score << " ";
+				 score += compute_cost_ind(i);
+			}
+			// cout << "New Score: " << score << endl;
+
+			// score = 0;
+			// for (int i = 0; i < n; i++){
+			// 	for (int j = 0; j < k; j++){
+			// 		if (all_seq[j].at(i) == '_'){
+			// 			score += cc;
+			// 			// cout << score << " ";
+			// 		}
+			// 		for (int p = j+1; p < k; p++){
+			// 			score += globalcosts[umap[all_seq[j].at(i)]][umap[all_seq[p].at(i)]];
+			// 			// cout << score << " ";
+			// 		}
+			// 	}
+			// 	// cout << endl;
+			// }
+			// cout << "Old Score: " << score << endl;
+		}
+
+		int compute_cost_ind(int idx){
+			map<char, int> count_map;
+
+			for (int i = 0; i < units.size(); i++){
+				count_map[units[i]] = 0;
+			}
+
+			for (int j = 0; j < k; j++){
+				count_map[all_seq[j].at(idx)]++;
+			}
+
+			int ans = 0;
+			for (auto j = count_map.begin(); j != count_map.end(); j++){
+				for (auto p = j; p != count_map.end(); p++){
+					// cout << j->first << " " << p->first << endl;
+					if (j->first == p->first){
+						ans += (globalcosts[umap[j->first]][umap[j->first]] * (j->second)*((j->second) -1)/2);		
 					}
-					for (int p = j+1; p < k; p++){
-						score += globalcosts[umap[all_seq[j].at(i)]][umap[all_seq[p].at(i)]];
-						// cout << score << " ";
+					else{
+						ans += (globalcosts[umap[j->first]][umap[p->first]] * p->second * j->second);
 					}
 				}
-				// cout << endl;
 			}
+
+			ans += cc * count_map['_'];
+
+			return ans;
 		}
 
 		void print_state(){
@@ -97,7 +142,7 @@ state greedy_choose_whole(state current, int ind){
 				string new_str = swap_char(str,i,j);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = new_str;
-				state new_state(current.n, new_seq);
+				state new_state = current.create_new(current.n, new_seq, i, j);
 				if (new_state.score < min_score){
 					best_state = new_state;
 					min_score = new_state.score;
@@ -108,7 +153,7 @@ state greedy_choose_whole(state current, int ind){
 				string new_str = swap_char(str,i,j);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = new_str;
-				state new_state(current.n, new_seq);
+				state new_state = current.create_new(current.n, new_seq, i, j);
 				if (new_state.score < min_score){
 					best_state = new_state;
 					min_score = new_state.score;
@@ -131,7 +176,7 @@ state greedy_choose(state current, int ind){
 				swap(str[i-1],str[i]);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = str;
-				state new_state(current.n, new_seq);
+				state new_state = current.create_new(current.n, new_seq, i-1, i);
 				if (new_state.score <= min_score){
 					best_state = new_state;
 					min_score = new_state.score;
@@ -142,7 +187,7 @@ state greedy_choose(state current, int ind){
 				swap(str[i+1],str[i]);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = str;
-				state new_state(current.n, new_seq);
+				state new_state = current.create_new(current.n, new_seq, i, i+1);
 				if (new_state.score <= min_score){
 					best_state = new_state;
 					min_score = new_state.score;
@@ -279,7 +324,7 @@ int main(){
 
 	// cout << umap['A'] << " " << umap['C'] << " " << umap['T'] << " " << umap['G'] << " " << umap['_'] << " " <<endl;
 
-	// state test = create_random_state(s,maxlen+1);
+	// state test = create_random_state(s,maxlen+2);
 	// test = create_random_state(s,maxlen+1);
 	// test.print_state();
 	// test.print_state();
