@@ -4,7 +4,7 @@ using namespace std;
 
 float RandomFloat(float min, float max)
 {
-	// this  function assumes max > min, you may want 
+	// this  function assumes max > min, you may want
 	// more robust error checking for a non-debug build
 	assert(max > min);
 	float random = ((float)rand()) / (float)RAND_MAX;
@@ -15,7 +15,7 @@ float RandomFloat(float min, float max)
 	return (random * range) + min;
 }
 
-string generateString(char[] c, int len) {
+string generateString(char c[], int len) {
 	string s = "";
 	int index;
 	for (int j = 0; j < len; j++) {
@@ -27,11 +27,11 @@ string generateString(char[] c, int len) {
 }
 
 int main() {
-
+    srand(time(NULL));
 	float f;
-	f = RandomFloat(0.5, 4.0)
+	f = RandomFloat(0.5, 4.0) ;
 	int k = 4;
-	char c[] = {'A','C','T','G'}
+	char c[] = {'A','C','T','G'} ;
 	int m = 0;
 	while (m == 0) {
 		m = rand() % 21;
@@ -60,7 +60,7 @@ int main() {
 		}
 	}
 	ofstream myfile;
-	myfile.open("E:/example.txt");
+	myfile.open("E:/Course Content/COL333/AI-Genome-Pattern-Matching/example.txt");
 	myfile << f << endl;
 	myfile << k << endl;
 	/*for (int i = 0; i < 3; i++) {
@@ -69,13 +69,15 @@ int main() {
 	myfile << "A, C, T, G" << endl;
 	myfile << m << endl;
 	for (int i = 0; i < m; i++) {
-		cout << s[i] << endl;
+		myfile << s[i] << endl;
 	}
-	cout << cc << endl;
+	myfile << cc << endl;
 	for (int i = 0; i < m + 1; i++) {
 		for (int j = 0; j < m + 1; j++) {
-			cout << cost[i][j] << " ";
+			myfile << cost[i][j] << " ";
 		}
-		cout << endl;
+		myfile << endl;
 	}
+
+	return 0 ;
 }

@@ -102,7 +102,7 @@ class state{
 				for (auto p = j; p != count_map.end(); p++){
 					// cout << j->first << " " << p->first << endl;
 					if (j->first == p->first){
-						ans += (globalcosts[umap[j->first]][umap[j->first]] * (j->second)*((j->second) -1)/2);		
+						ans += (globalcosts[umap[j->first]][umap[j->first]] * (j->second)*((j->second) -1)/2);
 					}
 					else{
 						ans += (globalcosts[umap[j->first]][umap[p->first]] * p->second * j->second);
@@ -120,7 +120,7 @@ class state{
 				cout << all_seq.at(i) << " ";
 			}
 			cout << endl;
-			cout << "Score is: " << score << endl;  
+			cout << "Score is: " << score << endl;
 		}
 };
 
@@ -192,7 +192,7 @@ state greedy_choose(state current, int ind){
 					best_state = new_state;
 					min_score = new_state.score;
 				}
-				swap(str[i+1],str[i]);	
+				swap(str[i+1],str[i]);
 			}
 		}
 	}
@@ -209,7 +209,29 @@ state create_random_state(string s[], int length){
 		while (new_s[i].length() < length){
 			int rand_int = (rand() % (s[i].size()));
 			if (rand_int ==  s[i].size()-1){
-				new_s[i].append("_");	
+				new_s[i].append("_");
+			}
+			else{
+				new_s[i].insert(rand_int,"_");
+			}
+		}
+		first.add(new_s[i]);
+	}
+	first.compute_cost();
+	return first;
+}
+
+state generateFromPrev(state prev, int length){
+	state first(length);
+	string new_s[k];
+	for (int i = 0; i < k; i++){
+		new_s[i] = prev.all_seq[i];
+	}
+	for (int i = 0; i < k; i++){
+		while (new_s[i].length() < length){
+			int rand_int = (rand() % (s[i].size()));
+			if (rand_int ==  s[i].size()-1){
+				new_s[i].append("_");
 			}
 			else{
 				new_s[i].insert(rand_int,"_");
@@ -235,7 +257,12 @@ state greedy_local_search(string s[], int maxlen){
 		if ((i-maxlen)*k*cc >= min_score){
 			i = maxlen;
 		}
-		current = create_random_state(s,i);
+		if(i == maxlen){
+            current = create_random_state(s,i);
+		}
+		else{
+            current = generateFromPrev(current,i)
+		}
 		cout << "Initial state:" << endl;
 		current.print_state();
 		cout << "--------------------" << endl;
@@ -279,12 +306,12 @@ int main(){
 	srand(time(NULL));
 	start_time = time(NULL);
 
-	ifstream infile; 
-	infile.open("input.txt"); 
-	cout << "Reading from the file" << endl; 
+	ifstream infile;
+	infile.open("input.txt");
+	cout << "Reading from the file" << endl;
 	infile >> total_time ;
 	infile >> m ;
-	
+
 	string str;
 	getline(infile,str);
 	getline(infile,str);
@@ -349,12 +376,12 @@ int main(){
 	min_state.print_state();
 
 
-	
+
 	// string test = s[0];
 	// cout << "String initially:" << test << endl;
 	// swap(test[2],test[3]);
 	// cout << "String finally:" << test << endl;
-	
+
 	// printf("Program will run for %f seconds\n",total_time*60);
 	// while (true){
 		// cout << "Time passed is: " << (time(NULL) - start_time) << endl;
