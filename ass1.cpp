@@ -3,23 +3,37 @@
 #include <stdlib.h>
 #include <vector>
 #include <string>
-#include <unordered_map>
 #include <map>
 #include <ctime>
-#include <limits>
+#include <limits.h>
+#include <math.h>
 
 using namespace std;
 
 //Global variable
 vector<vector<int> > globalcosts;		// Cost matrix
-vector<char> units; 					//{'A','T','G','C','_'};
-unordered_map<char, int> umap; 			//{'A':0,'T':1,'G':2,'C':3,'_':4};
-int cc;									// Cost of inserting '_'
+vector<char> units; 					// {'A','T','G','C','_'};
+map<char, int> umap; 			// {'A':0,'T':1,'G':2,'C':3,'-':4};
+int cc;									// Cost of inserting '-'
 time_t start_time;						// Starting time
 float total_time;						// Time the program should run
 int k;									// Number of strings
 int m;									// Number of units (excluding '_')
 int maxlen;								// Max Length of strings given
+
+
+float RandomFloat()
+{
+	// this  function assumes max > min, you may want
+	// more robust error checking for a non-debug build
+	// assert(max > min);
+	float random = ((float)rand()) / (float)RAND_MAX;
+
+	// generate (in your case) a float between 0 and (4.5-.78)
+	// then add .78, giving you a float between .78 and 4.5
+	return random;
+}
+
 
 //State Class
 class state{
@@ -35,15 +49,29 @@ class state{
 
 		state(int length_strings, vector<string> new_seq){
 			n = length_strings;
-			all_seq = new_seq;
+			// cout << "Check 1" << endl;
+			all_seq = new_seq ;
+			// cout << "Check 2" << endl;
 			score = 0;
 			// compute_cost();
 		}
 
+		//virtual ~state() = default;
+
+		state create_new(int length_strings, vector<string> new_seq, int p){
+			state new_state(n, new_seq);
+			new_state.score = score;
+			// for (int i = p; i < length_strings; i++){
+			// 	new_state.score = new_state.score - compute_cost_ind(i) + new_state.compute_cost_ind(i);	
+			// }
+			new_state.compute_cost();
+			return new_state;
+		}
+
 		state create_new(int length_strings, vector<string> new_seq, int p, int q){
 			state new_state(n, new_seq);
-			new_state.score = score - compute_cost_ind(p) - compute_cost_ind(q);
-			new_state.score = score + new_state.compute_cost_ind(p) + new_state.compute_cost_ind(q);
+			new_state.score = score - compute_cost_ind(p) - compute_cost_ind(q) + new_state.compute_cost_ind(p) + new_state.compute_cost_ind(q);
+			// new_state.compute_cost();
 			return new_state;
 		}
 
@@ -87,30 +115,33 @@ class state{
 		}
 
 		int compute_cost_ind(int idx){
-			map<char, int> count_map;
-
+			// map<char, int> count_map;
+			int counts[m+1] ;
+			// cout << "Check 5" << endl ;
 			for (int i = 0; i < units.size(); i++){
-				count_map[units[i]] = 0;
+				counts[i] = 0;
 			}
-
+			// cout << "Check 2" << endl ;
 			for (int j = 0; j < k; j++){
-				count_map[all_seq[j].at(idx)]++;
+				counts[umap[all_seq[j].at(idx)]]++;
 			}
-
+			// cout << "Check 69" << endl ;
 			int ans = 0;
-			for (auto j = count_map.begin(); j != count_map.end(); j++){
-				for (auto p = j; p != count_map.end(); p++){
+			for (int i = 0 ; i < m+1 ; i++){
+				for (int j = i ; j < m+1 ; j++){
 					// cout << j->first << " " << p->first << endl;
-					if (j->first == p->first){
-						ans += (globalcosts[umap[j->first]][umap[j->first]] * (j->second)*((j->second) -1)/2);
+					// cout << "Check 71" << endl ;
+					if (i == j){
+						ans += (globalcosts[i][i] * (counts[i]*((counts[i]) -1))/2);
 					}
 					else{
-						ans += (globalcosts[umap[j->first]][umap[p->first]] * p->second * j->second);
+						ans += (globalcosts[i][j] * counts[i] * counts[j]);
 					}
 				}
+				// cout << "Check 72" << endl ;
 			}
-
-			ans += cc * count_map['_'];
+			// cout << "Check 70" << endl ;
+			ans += cc * counts[m];
 
 			return ans;
 		}
@@ -122,11 +153,20 @@ class state{
 			cout << endl;
 			cout << "Score is: " << score << endl;
 		}
+
+		string return_output(){
+			string str = "";
+			for (int i = 0; i < k; i++){
+				str.append(all_seq.at(i));
+				str.append("\n");
+			}
+			return str;
+		}
 };
 
 string swap_char(string str, int i, int j){
 		str.erase(str.begin()+i);
-		str.insert(j,"_");
+		str.insert(j,"-");
 		return str;
 }
 
@@ -137,13 +177,13 @@ state greedy_choose_whole(state current, int ind){
 	int min_score = current.score;
 	state best_state = current;
 	for (int i = 0; i < str.size(); i++){
-		if (str.at(i) == '_'){
+		if (str.at(i) == '-'){
 			for (int j = 0; j < i; j++){
 				string new_str = swap_char(str,i,j);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = new_str;
-				state new_state = current.create_new(current.n, new_seq, i, j);
-				if (new_state.score <= min_score){
+				state new_state = current.create_new(current.n, new_seq, j);
+				if (new_state.score < min_score){
 					best_state = new_state;
 					min_score = new_state.score;
 				}
@@ -153,8 +193,8 @@ state greedy_choose_whole(state current, int ind){
 				string new_str = swap_char(str,i,j);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = new_str;
-				state new_state = current.create_new(current.n, new_seq, i, j);
-				if (new_state.score <= min_score){
+				state new_state = current.create_new(current.n, new_seq, i);
+				if (new_state.score < min_score){
 					best_state = new_state;
 					min_score = new_state.score;
 				}
@@ -168,35 +208,46 @@ state greedy_choose_whole(state current, int ind){
 //Neighbours of '_' are the elements beside it
 state greedy_choose(state current, int ind){
 	string str = current.all_seq.at(ind);
-	int min_score = current.score;
+	int min_score = INT_MAX ;
+	// int min_score = current.score;
 	state best_state = current;
 	for (int i = 0; i < str.size();i++){
-		if (str.at(i) == '_'){
-			if (i-1 >= 0 && str.at(i-1) != '_'){
+		if (str.at(i) == '-'){
+			if (i-1 >= 0 && str.at(i-1) != '-'){
 				swap(str[i-1],str[i]);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = str;
 				state new_state = current.create_new(current.n, new_seq, i-1, i);
 				if (new_state.score <= min_score){
+					
 					best_state = new_state;
 					min_score = new_state.score;
 				}
+
 				swap(str[i-1],str[i]);
 			}
-			if (i+1 < str.size() && str.at(i+1) != '_'){
+			if (i+1 < str.size() && str.at(i+1) != '-'){
 				swap(str[i+1],str[i]);
 				vector<string> new_seq = current.all_seq;
 				new_seq.at(ind) = str;
 				state new_state = current.create_new(current.n, new_seq, i, i+1);
 				if (new_state.score <= min_score){
+					
 					best_state = new_state;
 					min_score = new_state.score;
 				}
+
 				swap(str[i+1],str[i]);
 			}
 		}
 	}
-	return best_state;
+	// cout << "New state score: " << best_state.score << endl;
+	if(min_score <= current.score){
+		return best_state;
+	}
+	// return best_state;
+	return current ;
+
 }
 
 state create_random_state(string s[], int length){
@@ -205,19 +256,22 @@ state create_random_state(string s[], int length){
 	for (int i = 0; i < k; i++){
 		new_s[i] = s[i];
 	}
+	// cout << "Check 8" << endl ;
 	for (int i = 0; i < k; i++){
 		while (new_s[i].length() < length){
-			int rand_int = (rand() % (s[i].size()));
-			if (rand_int ==  s[i].size()-1){
-				new_s[i].append("_");
+			int rand_int = (rand() % (new_s[i].size()));
+			if (rand_int ==  new_s[i].size()-1){
+				new_s[i].append("-");
 			}
 			else{
-				new_s[i].insert(rand_int,"_");
+				new_s[i].insert(rand_int,"-");
 			}
 		}
 		first.add(new_s[i]);
 	}
+	// cout << "Check 6" << endl ;
 	first.compute_cost();
+	// cout << "Check 7" << endl ;
 	return first;
 }
 
@@ -230,14 +284,13 @@ state generateFromPrev(state prev, int length){
 	}
 	
 	for (int i = 0; i < k; i++){
-		int size = prev.all_seq[i].length() ;
 		while (new_s[i].length() < length){
-			int rand_int = (rand() % size);
-			if (rand_int ==  size-1){
-				new_s[i].append("_");
+			int rand_int = (rand() % new_s[i].length());
+			if (rand_int ==  new_s[i].length()-1){
+				new_s[i].append("-");
 			}
 			else{
-				new_s[i].insert(rand_int,"_");
+				new_s[i].insert(rand_int,"-");
 			}
 		}
 		first.add(new_s[i]);
@@ -247,17 +300,20 @@ state generateFromPrev(state prev, int length){
 }
 
 state greedy_local_search(string s[], int maxlen){
+	// cout << "Check 9" << endl;
 	state current = create_random_state(s,maxlen+1);
 	int min_score = current.score;
 	state min_state = current;
 	int i = maxlen;
 
+	// cout << "Check 10" << endl;
 
 	while (i <= maxlen*k){
+		// cout << "reaching " << i << endl;
 		if (time(NULL) - start_time + 5 >= total_time*60 ){
 			return min_state;
 		}
-		if ((i-maxlen)*k*cc >= min_score){
+		if ((i-maxlen)*k*cc >= min_score || (i==maxlen*k)){
 			i = maxlen;
 		}
 		if(i == maxlen){
@@ -267,54 +323,56 @@ state greedy_local_search(string s[], int maxlen){
             current = generateFromPrev(current,i) ;
 		}
 		// current = create_random_state(s,i);
-		cout << "Initial state:" << endl;
-		current.print_state();
-		cout << "--------------------" << endl;
+		// cout << "Initial state:" << endl;
+		// current.print_state();
+		// cout << "--------------------" << endl;
 
 		//Find next best state
 		int count = 0;
 		int tabu_count = 0;
 		while (true){
 			// cout << "Working:" << count << endl;
-			state next = greedy_choose_whole(current,count);
-			next.print_state();
+			state next = greedy_choose(current,count);
+			// next.print_state();
 
 			if (next.score < min_score){
-				next.print_state();
+				// next.print_state();
 				min_score = next.score;
 				min_state = next;
 			}
 
-			if (next.score > current.score){
-				break;
-			}
-			else if (next.score == current.score){
+			//min_state.print_state();
+
+			// if (next.score > current.score){
+			// 	break;
+			// }
+			if (next.score >= current.score){
 				tabu_count++;
-				if (tabu_count == 10){
+				if (tabu_count == 2*k){
 					break;
 				}
 			}
 			else{
 				tabu_count = 0;
-				current = next;
+						current = next;
 			}
 			count = (count+1)%k;
 		}
 		i++;
 	}
-	cout << "Min score: " << min_score << endl;
+	// cout << "Min score: " << min_score << endl;
 
 	return min_state;
 }
 
-int main(){
+int main(int argc,char** argv){
 	srand(time(NULL));
 	start_time = time(NULL);
 
 	ifstream infile;
-	infile.open("input2.txt");
+	infile.open(argv[1]);
 	// infile.open("example.txt");
-	cout << "Reading from the file" << endl;
+	// cout << "Reading from the file" << endl;
 	infile >> total_time ;
 	infile >> m ;
 
@@ -332,8 +390,8 @@ int main(){
 	    umap[str.at(i)] = count;
 	    count++;
 	}
-	units.push_back('_');
-	umap['_'] = count;
+	units.push_back('-');
+	umap['-'] = count;
 
 	infile >> k;
 	string s[k] ;
@@ -378,9 +436,18 @@ int main(){
 	// first.print_state();
 
 	state min_state = greedy_local_search(s,maxlen);
-	cout << "Min state is below" << endl;
-	min_state.print_state();
 
+	// cout << "reach 2" << endl;
+	// cout << "Min state is below" << endl;
+	// min_state.print_state();
+
+	ofstream outdata; // outdata is like cin
+
+	outdata.open(argv[2]); // opens the file
+	outdata << min_state.return_output();
+
+	// cout << min_state.return_output();
+	// out
 
 
 	// string test = s[0];
@@ -393,7 +460,7 @@ int main(){
 		// cout << "Time passed is: " << (time(NULL) - start_time) << endl;
 		// if (time(NULL) - start_time + 5 < total_time*60 ){
 		// 	break;
-		// }
+		// } 
 	// }
 
 	infile.close();
